@@ -28,11 +28,22 @@ class Retdec < Formula
   depends_on "libtool" => :build
   depends_on "pkgconf" => :build
   depends_on "openssl@3"
-  depends_on "python@3.13"
+  depends_on "python@3.14"
 
   uses_from_macos "zlib"
 
+  on_sequoia do
+    # Workaround for removed type support of 'std::char_traits' in LLVM 19+
+    # LLVMref: https://github.com/llvm/llvm-project/pull/72694
+    depends_on "llvm@18" => :build
+  end
+
   def install
+    if OS.mac? && MacOS.version == :sequoia
+      ENV["CC"] = Formula["llvm@18"].opt_bin/"clang"
+      ENV["CXX"] = Formula["llvm@18"].opt_bin/"clang++"
+    end
+
     # Workaround for CMake 4 compatibility with multiple vendored deps
     ENV["CMAKE_POLICY_VERSION_MINIMUM"] = "3.5"
 
